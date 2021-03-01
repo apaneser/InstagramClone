@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.parse.LogInCallback;
 import com.parse.ParseException;
 import com.parse.ParseUser;
+import com.parse.SignUpCallback;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -21,15 +22,51 @@ public class LoginActivity extends AppCompatActivity {
     private EditText etUsername;
     private EditText etPassword;
     private Button btnLogin;
+    private Button btnSignUp;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        ParseUser currentUser = ParseUser.getCurrentUser();
+        if (currentUser != null) {
+            goMainActivity();
+        }
+
         setContentView(R.layout.activity_login);
 
         etUsername = findViewById(R.id.etUsername);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
+        btnSignUp = findViewById(R.id.btnSignUp);
+        btnSignUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i(TAG, "OnClick login button");
+                String username = etUsername.getText().toString();
+                String password = etPassword.getText().toString();
+
+                if(username == null || password == null) {
+                    Toast.makeText(LoginActivity.this, "type in username and password", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                ParseUser user = new ParseUser();
+                user.setUsername(username);
+                user.setPassword(password);
+                user.signUpInBackground(new SignUpCallback() {
+                    public void done(ParseException e) {
+                        if (e == null) {
+                            goMainActivity();
+                            Toast.makeText(LoginActivity.this, "Success!", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Log.e(TAG, "issue with signup", e);
+                            Toast.makeText(LoginActivity.this, "issue with signup", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
+                });
+            }
+        });
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -42,12 +79,13 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loginUser(String username, String password) {
-        Log.i(TAG, "Attempting to login user" + username);
+        Log.i(TAG, "Attempting to login user " + username);
         ParseUser.logInInBackground(username, password, new LogInCallback() {
             @Override
             public void done(ParseUser user, ParseException e) {
                 if (e != null) {
-                    Log.e(TAG, "issue with login");
+                    Log.e(TAG, "issue with login", e);
+                    Toast.makeText(LoginActivity.this, "issue with login", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -61,5 +99,6 @@ public class LoginActivity extends AppCompatActivity {
     private void goMainActivity() {
         Intent i = new Intent(this, MainActivity.class);
         startActivity(i);
+        finish();
     }
 }
